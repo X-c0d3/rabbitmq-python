@@ -3,3 +3,105 @@ pip3 install -r requirements.txt
 or 
 
 pip install pika
+
+
+
+
+git clone https://github.com/michaelklishin/tls-gen tls-gen
+cd tls-gen/basic
+
+
+# private key password
+make PASSWORD=test1234 DAYS_OF_VALIDITY=3650
+make verify
+make info
+ls -l ./result
+
+
+mkdir /etc/rabbitmq/ssl/
+mv ca_certificate.pem server_certificate.pem server_key.pem /etc/rabbitmq/ssl/
+
+
+$ vim /etc/rabbitmq/enabled_plugins
+[rabbitmq_management].
+
+
+
+
+management.listener.port = 15671
+management.listener.ssl  = true
+
+management.listener.ssl_opts.cacertfile = /etc/rabbitmq/ssl/ca_certificate.pem
+management.listener.ssl_opts.certfile   = /etc/rabbitmq/ssl/server_certificate.pem
+management.listener.ssl_opts.keyfile    = /etc/rabbitmq/ssl/server_key.pem
+
+
+# Enable AMQPS
+listeners.ssl.default = 5671
+
+ssl_options.cacertfile = /etc/rabbitmq/ssl/ca_certificate.pem
+ssl_options.certfile = /etc/rabbitmq/ssl/server_certificate.pem
+ssl_options.keyfile = /etc/rabbitmq/ssl/server_key.pem
+ssl_options.verify = verify_peer
+ssl_options.fail_if_no_peer_cert = true
+
+ssl_options.versions.1 = tlsv1.2
+ssl_options.versions.2 = tlsv1.1
+ssl_options.fail_if_no_peer_cert = false
+
+tcp_listen_options.backlog       = 128
+tcp_listen_options.nodelay       = true
+tcp_listen_options.exit_on_close = false
+tcp_listen_options.keepalive     = false
+
+heartbeat = 580
+
+
+management.load_definitions = /etc/rabbitmq/definitions.json
+
+
+
+
+[
+  {'rabbit', [
+    {'loopback_users', []},
+    {ssl_listeners, [5671]},
+    {ssl_options, [{cacertfile, "/etc/rabbitmq/ssl/ca_certificate.pem"},
+                    {certfile,   "/etc/rabbitmq/ssl/server_certificate.pem"},
+                    {keyfile,    "/etc/rabbitmq/ssl/server_key.pem"},
+                    {verify,     verify_peer},
+                    {versions, ['tlsv1.2', 'tlsv1.1']},
+                    {fail_if_no_peer_cert, true}]}
+  ]},
+  {'rabbitmq_management', [
+    {'load_definitions', '/etc/rabbitmq/definitions.json'}
+  ]}
+].
+
+
+
+
+apt install adduser wget init-system-helpers openssl logrotate socat erlang
+
+wget https://github.com/rabbitmq/rabbitmq-server/releases/download/v3.8.7/rabbitmq-server_3.8.7-1_all.deb
+dpkg -i rabbitmq-server_3.8.7-1_all.deb
+
+
+apt-get install erlang-base \
+                    erlang-asn1 erlang-crypto erlang-eldap erlang-inets \
+                    erlang-mnesia erlang-os-mon erlang-parsetools erlang-public-key \
+                    erlang-runtime-tools erlang-snmp erlang-ssl \
+                    erlang-syntax-tools erlang-tools erlang-xmerl
+
+
+
+sudo systemctl enable rabbitmq-server
+sudo systemctl start rabbitmq-server
+sudo rabbitmq-plugins enable rabbitmq_management
+
+
+echo "deb https://dl.bintray.com/rabbitmq-erlang/debian buster erlang-22.x" | sudo tee /etc/apt/sources.list.d/rabbitmq.list
+
+
+
+Ref: https://www.rabbitmq.com/install-debian.html

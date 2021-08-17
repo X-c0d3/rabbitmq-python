@@ -3,8 +3,9 @@ import pika
 import sys
 import ssl
 import logging
+import certifi
 from configparser import ConfigParser
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 configur = ConfigParser()
 configur.read('config.ini')
 
@@ -14,21 +15,37 @@ userid = configur.get('appsettings', 'RABBITMQ_USER')
 password = configur.get('appsettings', 'RABBITMQ_PASS')
 port = configur.getint('appsettings', 'RABBITMQ_PORT')
 virtual_host = configur.get('appsettings', 'RABBITMQ_VIRTUALHOST')
+client_key_pass = configur.get('appsettings', 'CLIENT_KEY_PASS')
+logging.basicConfig(level=logging.DEBUG)
+# context = ssl.create_default_context(
+#     cafile="/Users/x-c0d3/Desktop/DEV/rabbitmq-python/certs/ca_key.pem")
+
+# context.load_cert_chain("/Users/x-c0d3/Desktop/DEV/rabbitmq-python/certs/client_certificate.pem",
+#                         "/Users/x-c0d3/Desktop/DEV/rabbitmq-python/certs/client_key.pem")
+# ssl_options = pika.SSLOptions(context, hostname)
 
 
-context = ssl.create_default_context(
-    cafile="/Users/x-c0d3/Desktop/DEV/rabbitmq-python/certs/ca_key.pem")
-context.load_cert_chain("/Users/x-c0d3/Desktop/DEV/rabbitmq-python/certs/client_certificate.pem",
-                        "/Users/x-c0d3/Desktop/DEV/rabbitmq-python/certs/client_key.pem")
-ssl_options = pika.SSLOptions(context, hostname)
+context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+context.verify_mode = ssl.CERT_REQUIRED
+
+context = ssl.create_default_context(cafile=certifi.where())
+context.load_cert_chain("certs/client_certificate.pem",
+                        "certs/client_key.pem", client_key_pass)
+
+# context.load_verify_locations(
+#     "/Users/x-c0d3/Desktop/DEV/rabbitmq-python/certs/client_certificate.pem",
+#     '/Users/x-c0d3/Desktop/DEV/rabbitmq-python/certs/client_key.pem')
+# context.load_cert_chain(
+#     "/Users/x-c0d3/Desktop/DEV/rabbitmq-python/certs/client_certificate.pem")
 
 credentials = pika.PlainCredentials(userid, password)
 connection = pika.BlockingConnection(pika.ConnectionParameters(host=hostname,
                                                                port=port,
                                                                virtual_host=virtual_host,
                                                                credentials=credentials,
-                                                               ssl_options=ssl_options,
-                                                               frame_max=10000))
+                                                               ssl_options=pika.SSLOptions(
+                                                                   context, hostname),
+                                                               ))
 
 
 channel = connection.channel()  # start a channel
