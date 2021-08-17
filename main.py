@@ -17,9 +17,9 @@ virtual_host = configur.get('appsettings', 'RABBITMQ_VIRTUALHOST')
 
 
 context = ssl.create_default_context(
-    cafile="certs/ca_certificate.pem")
-context.load_cert_chain("certs/client_certificate.pem",
-                        "certs/client_key.pem")
+    cafile="/Users/x-c0d3/Desktop/DEV/rabbitmq-python/certs/ca_key.pem")
+context.load_cert_chain("/Users/x-c0d3/Desktop/DEV/rabbitmq-python/certs/client_certificate.pem",
+                        "/Users/x-c0d3/Desktop/DEV/rabbitmq-python/certs/client_key.pem")
 ssl_options = pika.SSLOptions(context, hostname)
 
 credentials = pika.PlainCredentials(userid, password)
