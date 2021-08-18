@@ -21,7 +21,7 @@ class RabbitMQAdapter():
     def __init__(self):
         self.adapters = {}
         self.exchange = ''
-        self.exchange_type = ''  # topic/fanout
+        self.exchange_type = 'topic'  # topic/fanout
         self.durable = True
         self.heartbeat = 600
         self.timeout = 300
@@ -29,6 +29,7 @@ class RabbitMQAdapter():
         self.connection = self.setupConnection()
 
     def setupConnection(self):
+        # currentPath = os.path.normpath(os.path.join(__file__, '../../../'))
         currentPath = os.path.dirname(os.path.abspath(__file__))
         self.context = ssl.create_default_context(cafile=os.path.join(
             currentPath, 'certs/server/ca_certificate.pem'))
