@@ -37,7 +37,7 @@ class RabbitMQAdapter():
         # currentPath = os.path.normpath(os.path.join(__file__, '../../../'))
         currentPath = os.path.dirname(os.path.abspath(__file__))
         self.context = ssl.create_default_context(cafile=os.path.join(
-            currentPath, 'certs/server/ca_certificate.pem'))
+            currentPath, 'certs/client/ca_certificate.pem'))
         self.context.load_cert_chain(os.path.join(currentPath, "certs/client/client_certificate.pem"),
                                      os.path.join(currentPath, "certs/client/client_key.pem"), self.tls_key_pass)
 
