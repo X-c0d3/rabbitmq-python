@@ -104,4 +104,7 @@ echo "deb https://dl.bintray.com/rabbitmq-erlang/debian buster erlang-22.x" | su
 
 
 
+rabbitmq-diagnostics environment
+rabbitmq-diagnostics status
+
 Ref: https://www.rabbitmq.com/install-debian.html

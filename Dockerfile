@@ -19,8 +19,7 @@ EXPOSE 443 15672 15671 5672 5671 4369 25672
 
 
 
-# docker run -it -p 8883:8883 -p 1883:1883 -p 5671:5671 -p 15671:15671 --name rabbitmq_mqtt_tls_1 rabbitmq_mqtt_tls
-# docker run -it -p 5671:5671 -p 15672:15672 --name rabbitmq_mqtt_tls_1 rabbitmq_mqtt_tls
+# docker run -it -p 5671:5671 -p 5672:5672 -p 15672:15672 --name rabbitmq_mqtt_tls_1 rabbitmq_mqtt_tls
 
 # docker rm rabbitmq_mqtt_tls_1
 # docker build . -t rabbitmq_mqtt_tls
