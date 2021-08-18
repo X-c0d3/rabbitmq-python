@@ -125,7 +125,7 @@ class RabbitMQAdapter():
 
 
 if __name__ == "__main__":
-    rabbitmq = RabbitMQAdapter(ssl=False)
+    rabbitmq = RabbitMQAdapter(ssl=True)
     rabbitmq.exchange = 'x-reflux'
     rabbitmq.exchange_type = 'topic'  # topic/fanout
     rabbitmq.durable = True

@@ -1,6 +1,6 @@
 from RabbitMQAdapter import RabbitMQAdapter
 if __name__ == '__main__':
-    rabbitmq = RabbitMQAdapter()
+    rabbitmq = RabbitMQAdapter(ssl=True)
     rabbitmq.exchange = 'acid-data'
     rabbitmq.exchange_type = 'topic'  # topic/fanout
     rabbitmq.durable = True
