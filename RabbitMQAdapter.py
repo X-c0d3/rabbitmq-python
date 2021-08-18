@@ -26,17 +26,18 @@ class RabbitMQAdapter():
         self.port_ssl = 5671
         self.port = 5672
         self.exchange = ''
-        self.exchange_type = ''  # topic/fanout
-        self.durable = True  # durable=True - makes queue persistent
+        self.exchange_type = 'topic'  # topic/fanout
+        self.durable = True
         self.heartbeat = 600
         self.timeout = 300
         self.exclusive = False
         self.connection = self.setupConnection()
 
     def setupConnection(self):
+        # currentPath = os.path.normpath(os.path.join(__file__, '../../../'))
         currentPath = os.path.dirname(os.path.abspath(__file__))
         self.context = ssl.create_default_context(cafile=os.path.join(
-            currentPath, 'certs/server/ca_certificate.pem'))
+            currentPath, 'certs/client/ca_certificate.pem'))
         self.context.load_cert_chain(os.path.join(currentPath, "certs/client/client_certificate.pem"),
                                      os.path.join(currentPath, "certs/client/client_key.pem"), self.tls_key_pass)
 
