@@ -12,7 +12,7 @@ cd tls-gen/basic
 
 
 # private key password
-make PASSWORD=test1234 DAYS_OF_VALIDITY=3650
+make PASSWORD=Test1234 DAYS_OF_VALIDITY=3650
 make verify
 make info
 ls -l ./result
