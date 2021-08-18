@@ -2,6 +2,9 @@ import pika
 import os
 import logging
 import ssl
+import time
+import json
+import datetime
 from configparser import ConfigParser
 configur = ConfigParser()
 configur.read('config.ini')
@@ -14,12 +17,14 @@ class RabbitMQAdapter():
     hostname = configur.get('appsettings', 'RABBITMQ_HOST')
     userid = configur.get('appsettings', 'RABBITMQ_USER')
     password = configur.get('appsettings', 'RABBITMQ_PASS')
-    port = configur.getint('appsettings', 'RABBITMQ_PORT')
     virtual_host = configur.get('appsettings', 'RABBITMQ_VIRTUALHOST')
     tls_key_pass = configur.get('appsettings', 'TLS_KEY_PASS')
 
-    def __init__(self):
+    def __init__(self, ssl=True):
         self.adapters = {}
+        self.ssl_enabled = ssl
+        self.port_ssl = 5671
+        self.port = 5672
         self.exchange = ''
         self.exchange_type = 'topic'  # topic/fanout
         self.durable = True
@@ -42,10 +47,16 @@ class RabbitMQAdapter():
         self.context.verify_mode = ssl.CERT_REQUIRED
 
         # ssl_options = pika.SSLOptions(context)
-        ssl_options = pika.SSLOptions(self.context, self.hostname)
+        ssl_options = pika.SSLOptions(
+            self.context, self.hostname) if self.ssl_enabled else None
+        port = self.port_ssl if self.ssl_enabled else self.port
+
+        print('Host:' + str(self.hostname))
+        print('Port:' + str(port) + ', TLS/SSL Enabled:' + str(self.ssl_enabled))
+
         credentials = pika.PlainCredentials(self.userid, self.password)
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.hostname,
-                                                                       port=self.port,
+                                                                       port=port,
                                                                        virtual_host=self.virtual_host,
                                                                        credentials=credentials,
                                                                        ssl_options=ssl_options,
@@ -60,11 +71,31 @@ class RabbitMQAdapter():
         channel.exchange_declare(
             exchange=self.exchange, exchange_type=self.exchange_type,  durable=self.durable)
 
+        timestamp = time.time()
+
+        now = datetime.datetime.now()
+        expire = 1000 * int((now.replace(hour=23, minute=59, second=59,
+                                         microsecond=999999) - now).total_seconds())
+        headers = {  # example how headers can be used
+            'actionName': 'something',
+            'created': int(timestamp)
+        }
         channel.basic_publish(exchange=self.exchange,
                               routing_key=routing_key,
-                              body=body)
+                              body=json.dumps(body),
 
-        print("[x] Sent data")
+                              properties=pika.BasicProperties(
+                                  delivery_mode=2,  # makes persistent job
+                                  priority=0,  # default priority
+                                  # timestamp of job creation
+                                  timestamp=int(timestamp),
+                                  # job expiration (milliseconds from now), must be string, handled by rabbitmq
+                                  expiration=str(expire),
+                                  headers=headers
+                              )
+                              )
+
+        print("[x] Sent data: " + json.dumps(body))
         self.connection.close()
 
     def consumeData(self, routing_key, auto_ack=True):
@@ -94,7 +125,7 @@ class RabbitMQAdapter():
 
 
 if __name__ == "__main__":
-    rabbitmq = RabbitMQAdapter()
+    rabbitmq = RabbitMQAdapter(ssl=False)
     rabbitmq.exchange = 'x-reflux'
     rabbitmq.exchange_type = 'topic'  # topic/fanout
     rabbitmq.durable = True
