@@ -108,3 +108,7 @@ rabbitmq-diagnostics environment
 rabbitmq-diagnostics status
 
 Ref: https://www.rabbitmq.com/install-debian.html
+
+
+
+apt install python3 python3-pip
