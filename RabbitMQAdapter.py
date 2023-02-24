@@ -35,11 +35,22 @@ class RabbitMQAdapter():
 
     def setupConnection(self):
         # currentPath = os.path.normpath(os.path.join(__file__, '../../../'))
+
+        print('Host:' + str(self.hostname))
+        print('TLS/SSL Enabled:' + str(self.ssl_enabled))
+        print('Host:' + str(self.userid))
+        print('Pass:' + str(self.password))
+        print('tls_key_pass:' + str(self.tls_key_pass))
+
         currentPath = os.path.dirname(os.path.abspath(__file__))
         self.context = ssl.create_default_context(cafile=os.path.join(
             currentPath, 'certs/client/ca_certificate.pem'))
-        self.context.load_cert_chain(os.path.join(currentPath, "certs/client/client_certificate.pem"),
-                                     os.path.join(currentPath, "certs/client/client_key.pem"), self.tls_key_pass)
+
+        # for Cloudamqp dont need to vertify with Passphrase
+        # https://letsencrypt.org/certs/isrgrootx1.pem
+        if self.tls_key_pass:
+            self.context.load_cert_chain(os.path.join(currentPath, "certs/client/client_certificate.pem"),
+                                         os.path.join(currentPath, "certs/client/client_key.pem"), self.tls_key_pass)
 
         # self.context.verify_mode = ssl.CERT_NONE
         # self.context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
@@ -53,6 +64,9 @@ class RabbitMQAdapter():
 
         print('Host:' + str(self.hostname))
         print('Port:' + str(port) + ', TLS/SSL Enabled:' + str(self.ssl_enabled))
+        print('user:' + str(self.userid))
+        print('password:' + str(self.password))
+        print('tls_key_pass:' + str(self.tls_key_pass))
 
         credentials = pika.PlainCredentials(self.userid, self.password)
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.hostname,
@@ -72,6 +86,8 @@ class RabbitMQAdapter():
             exchange=self.exchange, exchange_type=self.exchange_type,  durable=self.durable)
 
         timestamp = time.time()
+
+        print("[x] xxxx " + json.dumps(body))
 
         now = datetime.datetime.now()
         expire = 1000 * int((now.replace(hour=23, minute=59, second=59,
@@ -98,17 +114,23 @@ class RabbitMQAdapter():
         print("[x] Sent data: " + json.dumps(body))
         self.connection.close()
 
-    def consumeData(self, routing_key, auto_ack=True):
+    def consumeData(self, routing_key, auto_ack=False):
         # start a channel
         channel = self.connection.channel()
         channel.exchange_declare(
             exchange=self.exchange, exchange_type=self.exchange_type,  durable=self.durable)
 
         result = channel.queue_declare(
-            queue=routing_key, exclusive=self.exclusive, durable=self.durable)
+            queue='', exclusive=self.exclusive, durable=self.durable)
 
         queue_name = result.method.queue
-        channel.queue_bind(exchange=self.exchange, queue=queue_name)
+        print('[x] exchange: ' + str(self.exchange))
+        print("[x] queue_name: " + queue_name)
+        print("[x] routing_key: " + routing_key)
+        print("[x] auto_ack: " + str(auto_ack))
+        # queue_name = 'messages'
+        channel.queue_bind(exchange=self.exchange,
+                           queue=queue_name, routing_key=routing_key)
         print(' [*] Waiting for logs. To exit press CTRL+C')
 
         def callback(ch, method, properties, body):
